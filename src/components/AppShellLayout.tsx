@@ -21,6 +21,7 @@ import {
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ColorSchemeToggle } from "./ColorSchemeToggle";
+import { LogoutButton } from "./LogoutButton";
 
 const navSections = [
   {
@@ -34,9 +35,7 @@ const navSections = [
   },
   {
     title: "Catálogo",
-    items: [
-      { label: "Productos", href: "/products", icon: IconBurger },
-    ],
+    items: [{ label: "Productos", href: "/products", icon: IconBurger }],
   },
   {
     title: "Configuración",
@@ -70,10 +69,13 @@ export function AppShellLayout({ children }: { children: React.ReactNode }) {
             <Text fw={700}>Mana Restaurante</Text>
           </Group>
 
-          <Text c="dimmed" size="sm">
-            Admin
-          </Text>
-          <ColorSchemeToggle />
+          <Group gap="sm">
+            <Text c="dimmed" size="sm">
+              Admin
+            </Text>
+            <ColorSchemeToggle />
+            <LogoutButton />
+          </Group>
         </Group>
       </AppShell.Header>
 

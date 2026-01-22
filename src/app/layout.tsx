@@ -17,7 +17,7 @@ export default function RootLayout({
   return (
     <html lang="es">
       <head>
-        <ColorSchemeScript defaultColorScheme="auto" />
+        <ColorSchemeScript defaultColorScheme="light" />
       </head>
       <body>
         <Providers>{children}</Providers>
