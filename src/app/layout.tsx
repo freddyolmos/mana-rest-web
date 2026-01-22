@@ -1,7 +1,8 @@
 import "@mantine/core/styles.css";
 
 import type { Metadata } from "next";
-import { ColorSchemeScript, MantineProvider } from "@mantine/core";
+import { ColorSchemeScript } from "@mantine/core";
+import { Providers } from "./providers";
 
 export const metadata: Metadata = {
   title: "Mana Restaurante",
@@ -16,10 +17,10 @@ export default function RootLayout({
   return (
     <html lang="es">
       <head>
-        <ColorSchemeScript />
+        <ColorSchemeScript defaultColorScheme="auto" />
       </head>
       <body>
-        <MantineProvider>{children}</MantineProvider>
+        <Providers>{children}</Providers>
       </body>
     </html>
   );
