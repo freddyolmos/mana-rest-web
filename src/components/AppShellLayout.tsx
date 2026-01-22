@@ -22,10 +22,26 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ColorSchemeToggle } from "./ColorSchemeToggle";
 
-const navItems = [
-  { label: "Dashboard", icon: IconLayoutDashboard, href: "/dashboard" },
-  { label: "POS", icon: IconBuildingStore, href: "/pos" },
-  { label: "Productos", icon: IconBurger, href: "/products" },
+const navSections = [
+  {
+    title: "Operación",
+    items: [
+      { label: "Dashboard", href: "/dashboard", icon: IconLayoutDashboard },
+      { label: "POS", href: "/pos", icon: IconBuildingStore },
+      { label: "Órdenes", href: "/orders", icon: IconReceipt },
+      { label: "Cocina", href: "/kitchen", icon: IconChefHat },
+    ],
+  },
+  {
+    title: "Catálogo",
+    items: [
+      { label: "Productos", href: "/products", icon: IconBurger },
+    ],
+  },
+  {
+    title: "Configuración",
+    items: [{ label: "Ajustes", href: "/settings", icon: IconSettings }],
+  },
 ];
 
 export function AppShellLayout({ children }: { children: React.ReactNode }) {
@@ -63,23 +79,32 @@ export function AppShellLayout({ children }: { children: React.ReactNode }) {
 
       <AppShell.Navbar p="md">
         <ScrollArea>
-          {navItems.map((item) => {
-            const active =
-              pathname === item.href || pathname.startsWith(item.href + "/");
-            const Icon = item.icon;
+          {navSections.map((section) => (
+            <div key={section.title}>
+              <Text size="xs" fw={700} c="dimmed" tt="uppercase" mt="sm" mb={6}>
+                {section.title}
+              </Text>
 
-            return (
-              <NavLink
-                key={item.href}
-                component={Link}
-                href={item.href}
-                label={item.label}
-                leftSection={<Icon size={18} />}
-                active={active}
-                onClick={close}
-              />
-            );
-          })}
+              {section.items.map((item) => {
+                const active =
+                  pathname === item.href ||
+                  pathname.startsWith(item.href + "/");
+                const Icon = item.icon;
+
+                return (
+                  <NavLink
+                    key={item.href}
+                    component={Link}
+                    href={item.href}
+                    label={item.label}
+                    leftSection={<Icon size={18} />}
+                    active={active}
+                    onClick={close}
+                  />
+                );
+              })}
+            </div>
+          ))}
         </ScrollArea>
       </AppShell.Navbar>
 
