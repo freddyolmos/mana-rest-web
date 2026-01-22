@@ -9,12 +9,23 @@ import {
   Text,
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
-import { IconLayoutDashboard } from "@tabler/icons-react";
+import {
+  IconLayoutDashboard,
+  IconBuildingStore,
+  IconBurger,
+  IconReceipt,
+  IconChefHat,
+  IconChartBar,
+  IconSettings,
+} from "@tabler/icons-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { ColorSchemeToggle } from "./ColorSchemeToggle";
 
 const navItems = [
   { label: "Dashboard", icon: IconLayoutDashboard, href: "/dashboard" },
+  { label: "POS", icon: IconBuildingStore, href: "/pos" },
+  { label: "Productos", icon: IconBurger, href: "/products" },
 ];
 
 export function AppShellLayout({ children }: { children: React.ReactNode }) {
@@ -46,6 +57,7 @@ export function AppShellLayout({ children }: { children: React.ReactNode }) {
           <Text c="dimmed" size="sm">
             Admin
           </Text>
+          <ColorSchemeToggle />
         </Group>
       </AppShell.Header>
 
