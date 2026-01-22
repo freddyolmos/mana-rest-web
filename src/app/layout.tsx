@@ -1,12 +1,12 @@
-import '@mantine/core/styles.css'
+import "@mantine/core/styles.css";
 
-import type { Metadata } from 'next';
-import { ColorSchemeScript, MantineProvider } from '@mantine/core';
+import type { Metadata } from "next";
+import { ColorSchemeScript, MantineProvider } from "@mantine/core";
 
-export const metada: Metadata = {
-  title: 'Mana Restaurante',
-  description: 'Sistema web para restaurante',
-}
+export const metadata: Metadata = {
+  title: "Mana Restaurante",
+  description: "Sistema web para restaurante",
+};
 
 export default function RootLayout({
   children,
@@ -19,9 +19,7 @@ export default function RootLayout({
         <ColorSchemeScript />
       </head>
       <body>
-        <MantineProvider>
-          {children}
-        </MantineProvider>
+        <MantineProvider>{children}</MantineProvider>
       </body>
     </html>
   );
