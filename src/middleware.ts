@@ -12,9 +12,9 @@ export function middleware(request: NextRequest) {
 
   if (isPublic) return NextResponse.next();
 
-  const session = request.cookies.get("mana_session")?.value;
+  const accessToken = request.cookies.get("accessToken")?.value;
 
-  if (!session) {
+  if (!accessToken) {
     const url = request.nextUrl.clone();
     url.pathname = "/auth/login";
     return NextResponse.redirect(url);

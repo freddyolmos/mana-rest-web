@@ -35,7 +35,21 @@ export default function LoginPage() {
   });
 
   const onSubmit = form.onSubmit(async (values) => {
-    setCookie("mana_session", "1", 7);
+    form.clearErrors();
+
+    const resp = await fetch("/api/auth/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(values),
+    });
+
+    if (!resp.ok) {
+      const data = await resp.json().catch(() => null);
+      form.setErrors({
+        email: data?.message ?? "No se pudo iniciar sesión",
+      });
+      return;
+    }
 
     router.replace("/dashboard");
   });
