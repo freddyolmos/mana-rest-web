@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-export function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl;
+export async function middleware(request: NextRequest) {
+  const { pathname, origin } = request.nextUrl;
 
   const isPublic =
     pathname.startsWith("/auth/login") ||
@@ -13,14 +13,36 @@ export function middleware(request: NextRequest) {
   if (isPublic) return NextResponse.next();
 
   const accessToken = request.cookies.get("accessToken")?.value;
+  if (accessToken) return NextResponse.next();
 
-  if (!accessToken) {
+  const refreshToken = request.cookies.get("refreshToken")?.value;
+  if (!refreshToken) {
     const url = request.nextUrl.clone();
     url.pathname = "/auth/login";
     return NextResponse.redirect(url);
   }
 
-  return NextResponse.next();
+  const refreshResp = await fetch(`${origin}/api/auth/refresh`, {
+    method: "POST",
+    headers: {
+      cookie: request.headers.get("cookie") ?? "",
+    },
+  });
+
+  if (!refreshResp.ok) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/auth/login";
+    return NextResponse.redirect(url);
+  }
+
+  const res = NextResponse.next();
+
+  const setCookie = refreshResp.headers.get("set-cookie");
+  if (setCookie) {
+    res.headers.set("set-cookie", setCookie);
+  }
+
+  return res;
 }
 
 export const config = {

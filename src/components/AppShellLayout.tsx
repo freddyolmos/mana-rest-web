@@ -15,7 +15,7 @@ import {
   IconBurger,
   IconReceipt,
   IconChefHat,
-  IconChartBar,
+  IconTags,
   IconSettings,
 } from "@tabler/icons-react";
 import Link from "next/link";
@@ -35,7 +35,10 @@ const navSections = [
   },
   {
     title: "Catálogo",
-    items: [{ label: "Productos", href: "/products", icon: IconBurger }],
+    items: [
+      { label: "Productos", href: "/products", icon: IconBurger },
+      { label: "Categorías", href: "/categories", icon: IconTags },
+    ],
   },
   {
     title: "Configuración",
