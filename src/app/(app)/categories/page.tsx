@@ -18,17 +18,17 @@ import { useForm } from "@mantine/form";
 import { useEffect, useMemo, useState } from "react";
 import { IconEdit, IconPlus } from "@tabler/icons-react";
 
-import type { Category } from "@/services/categories.service";
-import {
-  createCategory,
-  listCategories,
-  updateCategory,
-} from "@/services/categories.service";
 import { EmptyState } from "@/components/EmptyState";
 import { PageHeader } from "@/components/PageHeader";
 import { SectionCard } from "@/components/SectionCard";
 import { StatusBadge } from "@/components/StatusBadge";
 import type { Role } from "@/lib/rbac";
+import type { Category } from "@/features/categories/types";
+import {
+  useCategoriesQuery,
+  useCreateCategoryMutation,
+  useUpdateCategoryMutation,
+} from "@/features/categories/query";
 
 type Mode = "create" | "edit";
 
@@ -49,15 +49,13 @@ function getErrorMessage(err: unknown) {
 }
 
 export default function CategoriesPage() {
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [rows, setRows] = useState<Category[]>([]);
-  const [error, setError] = useState<string | null>(null);
-
   const [opened, { open, close }] = useDisclosure(false);
   const [mode, setMode] = useState<Mode>("create");
   const [selected, setSelected] = useState<Category | null>(null);
   const [me, setMe] = useState<Me | null>(null);
+  const categoriesQuery = useCategoriesQuery();
+  const createCategoryMutation = useCreateCategoryMutation();
+  const updateCategoryMutation = useUpdateCategoryMutation();
 
   const form = useForm<FormValues>({
     initialValues: { name: "", sortOrder: 1, isActive: true },
@@ -80,23 +78,19 @@ export default function CategoriesPage() {
   }, []);
 
   const isAdmin = me?.role === "ADMIN";
-
-  async function load() {
-    setLoading(true);
-    setError(null);
-    try {
-      const data = await listCategories();
-      setRows(data);
-    } catch (e: unknown) {
-      setError(getErrorMessage(e));
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  useEffect(() => {
-    void load();
-  }, []);
+  const rows = categoriesQuery.data ?? [];
+  const loading = categoriesQuery.isFetching || categoriesQuery.isLoading;
+  const saving =
+    createCategoryMutation.isPending || updateCategoryMutation.isPending;
+  const queryError = categoriesQuery.error
+    ? getErrorMessage(categoriesQuery.error)
+    : null;
+  const mutationError = createCategoryMutation.error
+    ? getErrorMessage(createCategoryMutation.error)
+    : updateCategoryMutation.error
+      ? getErrorMessage(updateCategoryMutation.error)
+      : null;
+  const error = queryError ?? mutationError;
 
   const onOpenCreate = () => {
     setMode("create");
@@ -119,34 +113,26 @@ export default function CategoriesPage() {
   };
 
   const onSubmit = form.onSubmit(async (values) => {
-    setSaving(true);
-    setError(null);
-
     try {
       if (mode === "create") {
-        const created = await createCategory({
+        await createCategoryMutation.mutateAsync({
           name: values.name.trim(),
           sortOrder: values.sortOrder,
         });
-        setRows((prev) => [created, ...prev]);
       } else {
         if (!selected) return;
-        const updated = await updateCategory(selected.id, {
-          name: values.name.trim(),
-          sortOrder: values.sortOrder,
-          isActive: values.isActive,
+        await updateCategoryMutation.mutateAsync({
+          id: selected.id,
+          payload: {
+            name: values.name.trim(),
+            sortOrder: values.sortOrder,
+            isActive: values.isActive,
+          },
         });
-        setRows((prev) =>
-          prev.map((x) => (x.id === selected.id ? updated : x)),
-        );
       }
 
       close();
-    } catch (e: unknown) {
-      setError(getErrorMessage(e));
-    } finally {
-      setSaving(false);
-    }
+    } catch {}
   });
 
   return (
@@ -164,7 +150,12 @@ export default function CategoriesPage() {
                 Nueva
               </Button>
             )}
-            <Button variant="light" onClick={load}>
+            <Button
+              variant="light"
+              onClick={() => {
+                void categoriesQuery.refetch();
+              }}
+            >
               Recargar
             </Button>
           </>
