@@ -13,13 +13,6 @@ import {
   Stack,
 } from "@mantine/core";
 
-function setCookie(name: string, value: string, days = 7) {
-  const maxAge = days * 24 * 60 * 60;
-  document.cookie = `${name}=${encodeURIComponent(
-    value,
-  )}; Path=/; Max-Age=${maxAge}; SameSite=Lax`;
-}
-
 export default function LoginPage() {
   const router = useRouter();
 

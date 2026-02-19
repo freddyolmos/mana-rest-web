@@ -1,10 +1,21 @@
-import { Stack, Title, Text } from "@mantine/core";
+import { Stack } from "@mantine/core";
+import { EmptyState } from "@/components/EmptyState";
+import { PageHeader } from "@/components/PageHeader";
+import { SectionCard } from "@/components/SectionCard";
 
 export default function OrdersPage() {
   return (
     <Stack>
-      <Title order={2}>Órdenes</Title>
-      <Text c="dimmed">Lista de órdenes, estados, filtros, etc.</Text>
+      <PageHeader
+        title="Órdenes"
+        description="Seguimiento de órdenes y sus estados."
+      />
+      <SectionCard>
+        <EmptyState
+          title="Lista pendiente"
+          description="Esta vista mostrará órdenes con filtros y acciones de flujo."
+        />
+      </SectionCard>
     </Stack>
   );
 }

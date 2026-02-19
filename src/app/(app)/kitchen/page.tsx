@@ -1,10 +1,21 @@
-import { Stack, Title, Text } from "@mantine/core";
+import { Stack } from "@mantine/core";
+import { EmptyState } from "@/components/EmptyState";
+import { PageHeader } from "@/components/PageHeader";
+import { SectionCard } from "@/components/SectionCard";
 
 export default function KitchenPage() {
   return (
     <Stack>
-      <Title order={2}>Cocina</Title>
-      <Text c="dimmed">Pantalla de cocina (KDS) con estados.</Text>
+      <PageHeader
+        title="Cocina"
+        description="Tablero KDS para avance de preparación."
+      />
+      <SectionCard>
+        <EmptyState
+          title="Sin órdenes en cocina"
+          description="Aquí se mostrarán los ítems pendientes por preparar."
+        />
+      </SectionCard>
     </Stack>
   );
 }

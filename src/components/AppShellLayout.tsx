@@ -2,8 +2,10 @@
 
 import {
   AppShell,
+  Badge,
   Burger,
   Group,
+  Loader,
   NavLink,
   ScrollArea,
   Text,
@@ -16,39 +18,54 @@ import {
   IconReceipt,
   IconChefHat,
   IconTags,
+  IconChartBar,
   IconSettings,
 } from "@tabler/icons-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
 import { ColorSchemeToggle } from "./ColorSchemeToggle";
 import { LogoutButton } from "./LogoutButton";
+import { navForRole, type Role } from "@/lib/rbac";
 
-const navSections = [
-  {
-    title: "Operación",
-    items: [
-      { label: "Dashboard", href: "/dashboard", icon: IconLayoutDashboard },
-      { label: "POS", href: "/pos", icon: IconBuildingStore },
-      { label: "Órdenes", href: "/orders", icon: IconReceipt },
-      { label: "Cocina", href: "/kitchen", icon: IconChefHat },
-    ],
-  },
-  {
-    title: "Catálogo",
-    items: [
-      { label: "Productos", href: "/products", icon: IconBurger },
-      { label: "Categorías", href: "/categories", icon: IconTags },
-    ],
-  },
-  {
-    title: "Configuración",
-    items: [{ label: "Ajustes", href: "/settings", icon: IconSettings }],
-  },
-];
+type Me = {
+  userId: number;
+  email: string;
+  role: Role;
+};
+
+const iconByName = {
+  dashboard: IconLayoutDashboard,
+  pos: IconBuildingStore,
+  products: IconBurger,
+  orders: IconReceipt,
+  kitchen: IconChefHat,
+  categories: IconTags,
+  reports: IconChartBar,
+  settings: IconSettings,
+} as const;
 
 export function AppShellLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [opened, { toggle, close }] = useDisclosure();
+  const [me, setMe] = useState<Me | null>(null);
+  const [loadingMe, setLoadingMe] = useState(true);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch("/api/auth/me", { cache: "no-store" });
+        if (res.ok) {
+          setMe((await res.json()) as Me);
+        }
+      } finally {
+        setLoadingMe(false);
+      }
+    })();
+  }, []);
+
+  const role: Role = me?.role ?? "CASHIER";
+  const sections = useMemo(() => navForRole(role), [role]);
 
   return (
     <AppShell
@@ -73,9 +90,16 @@ export function AppShellLayout({ children }: { children: React.ReactNode }) {
           </Group>
 
           <Group gap="sm">
-            <Text c="dimmed" size="sm">
-              Admin
-            </Text>
+            {loadingMe ? (
+              <Loader size="xs" />
+            ) : (
+              <Group gap={6}>
+                <Text c="dimmed" size="sm">
+                  {me?.email ?? "Usuario"}
+                </Text>
+                <Badge variant="light">{role}</Badge>
+              </Group>
+            )}
             <ColorSchemeToggle />
             <LogoutButton />
           </Group>
@@ -84,7 +108,7 @@ export function AppShellLayout({ children }: { children: React.ReactNode }) {
 
       <AppShell.Navbar p="md">
         <ScrollArea>
-          {navSections.map((section) => (
+          {sections.map((section) => (
             <div key={section.title}>
               <Text size="xs" fw={700} c="dimmed" tt="uppercase" mt="sm" mb={6}>
                 {section.title}
@@ -94,7 +118,7 @@ export function AppShellLayout({ children }: { children: React.ReactNode }) {
                 const active =
                   pathname === item.href ||
                   pathname.startsWith(item.href + "/");
-                const Icon = item.icon;
+                const Icon = iconByName[item.icon];
 
                 return (
                   <NavLink

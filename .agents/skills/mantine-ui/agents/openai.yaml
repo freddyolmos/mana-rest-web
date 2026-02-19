@@ -1,0 +1,5 @@
+interface:
+  display_name: "Mantine UI"
+  short_description: "Mantine patterns for Next.js + React (theming, layout, forms)."
+policy:
+  allow_implicit_invocation: false

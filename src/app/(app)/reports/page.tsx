@@ -1,10 +1,21 @@
-import { Stack, Title, Text } from '@mantine/core';
+import { Stack } from "@mantine/core";
+import { EmptyState } from "@/components/EmptyState";
+import { PageHeader } from "@/components/PageHeader";
+import { SectionCard } from "@/components/SectionCard";
 
 export default function ReportsPage() {
   return (
     <Stack>
-      <Title order={2}>Reportes</Title>
-      <Text c="dimmed">Ventas por día, productos top, etc.</Text>
+      <PageHeader
+        title="Reportes"
+        description="Análisis de ventas y comportamiento operativo."
+      />
+      <SectionCard>
+        <EmptyState
+          title="Sin datos seleccionados"
+          description="Se agregarán filtros por rango de fechas y gráficos en la fase 2."
+        />
+      </SectionCard>
     </Stack>
   );
 }

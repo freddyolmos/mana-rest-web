@@ -69,6 +69,6 @@ export async function updateCategory(
   return toJsonOrThrow(res);
 }
 
-export async function deleteCategory(id: number): Promise<{ ok: boolean }> {
+export async function deleteCategory(): Promise<{ ok: boolean }> {
   throw new Error("Eliminar categorías no está implementado en la API");
 }

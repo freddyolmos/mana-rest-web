@@ -7,13 +7,11 @@ import {
   LoadingOverlay,
   Modal,
   NumberInput,
-  Paper,
   Stack,
   Switch,
   Table,
   Text,
   TextInput,
-  Title,
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { useForm } from "@mantine/form";
@@ -26,6 +24,11 @@ import {
   listCategories,
   updateCategory,
 } from "@/services/categories.service";
+import { EmptyState } from "@/components/EmptyState";
+import { PageHeader } from "@/components/PageHeader";
+import { SectionCard } from "@/components/SectionCard";
+import { StatusBadge } from "@/components/StatusBadge";
+import type { Role } from "@/lib/rbac";
 
 type Mode = "create" | "edit";
 
@@ -38,7 +41,7 @@ type FormValues = {
 type Me = {
   userId: number;
   email: string;
-  role: "ADMIN" | "CASHIER" | "KITCHEN";
+  role: Role;
 };
 
 function getErrorMessage(err: unknown) {
@@ -148,31 +151,40 @@ export default function CategoriesPage() {
 
   return (
     <Stack>
-      <Group justify="space-between">
-        <Title order={2}>Categorias</Title>
-        <Group>
-          {isAdmin && (
-            <Button leftSection={<IconPlus size={16} />} onClick={onOpenCreate}>
-              Nueva
+      <PageHeader
+        title="Categorías"
+        description="Gestiona la clasificación del catálogo."
+        actions={
+          <>
+            {isAdmin && (
+              <Button
+                leftSection={<IconPlus size={16} />}
+                onClick={onOpenCreate}
+              >
+                Nueva
+              </Button>
+            )}
+            <Button variant="light" onClick={load}>
+              Recargar
             </Button>
-          )}
-          <Button variant="light" onClick={load}>
-            Recargar
-          </Button>
-        </Group>
-      </Group>
+          </>
+        }
+      />
 
       {error && (
-        <Paper withBorder p="md">
+        <SectionCard>
           <Text c="red">{error}</Text>
-        </Paper>
+        </SectionCard>
       )}
 
-      <Paper withBorder p="md" pos="relative">
+      <SectionCard pos="relative">
         <LoadingOverlay visible={loading || saving} />
 
         {rows.length === 0 && !loading ? (
-          <Text c="dimmed">No hay categorias.</Text>
+          <EmptyState
+            title="No hay categorías"
+            description="Crea la primera categoría para comenzar el catálogo."
+          />
         ) : (
           <Table highlightOnHover>
             <Table.Thead>
@@ -191,7 +203,9 @@ export default function CategoriesPage() {
                   <Table.Td>{cat.id}</Table.Td>
                   <Table.Td>{cat.name}</Table.Td>
                   <Table.Td>{cat.sortOrder}</Table.Td>
-                  <Table.Td>{cat.isActive ? "Si" : "No"}</Table.Td>
+                  <Table.Td>
+                    <StatusBadge status={cat.isActive ? "ACTIVE" : "INACTIVE"} />
+                  </Table.Td>
                   <Table.Td>
                     <Group justify="flex-end" gap="xs">
                       {isAdmin && (
@@ -210,7 +224,7 @@ export default function CategoriesPage() {
             </Table.Tbody>
           </Table>
         )}
-      </Paper>
+      </SectionCard>
 
       <Modal opened={opened} onClose={close} title={title} centered>
         <form onSubmit={onSubmit}>

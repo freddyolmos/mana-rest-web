@@ -1,10 +1,21 @@
-import { Title, Text, Stack } from "@mantine/core";
+import { Stack } from "@mantine/core";
+import { EmptyState } from "@/components/EmptyState";
+import { PageHeader } from "@/components/PageHeader";
+import { SectionCard } from "@/components/SectionCard";
 
 export default function PosPage() {
   return (
     <Stack>
-      <Title order={2}>POS</Title>
-      <Text c="dimmed">Interfaz de caja (rápida y con botones grandes).</Text>
+      <PageHeader
+        title="POS"
+        description="Punto de venta para crear órdenes rápidamente."
+      />
+      <SectionCard>
+        <EmptyState
+          title="POS en preparación"
+          description="La siguiente fase conectará menú, carrito y envío a cocina."
+        />
+      </SectionCard>
     </Stack>
   );
 }

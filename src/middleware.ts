@@ -1,20 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { decodeJwt } from "@/lib/jwt";
-
-type Role = "ADMIN" | "CASHIER" | "KITCHEN";
-
-function isAllowed(pathname: string, role: Role) {
-  if (pathname.startsWith("/categories")) return role === "ADMIN";
-  if (pathname.startsWith("/products")) return role === "ADMIN";
-
-  if (pathname.startsWith("/pos"))
-    return role === "ADMIN" || role === "CASHIER";
-  if (pathname.startsWith("/kitchen"))
-    return role === "ADMIN" || role === "KITCHEN";
-
-  return true;
-}
+import { canAccessPath } from "@/lib/rbac";
 
 export async function middleware(request: NextRequest) {
   const { pathname, origin } = request.nextUrl;
@@ -64,7 +51,7 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  if (!isAllowed(pathname, role)) {
+  if (!canAccessPath(pathname, role)) {
     const url = request.nextUrl.clone();
     url.pathname = "/unauthorized";
     return NextResponse.redirect(url);

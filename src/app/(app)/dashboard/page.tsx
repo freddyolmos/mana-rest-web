@@ -1,10 +1,21 @@
-import { Title, Text, Stack } from "@mantine/core";
+import { Stack } from "@mantine/core";
+import { EmptyState } from "@/components/EmptyState";
+import { PageHeader } from "@/components/PageHeader";
+import { SectionCard } from "@/components/SectionCard";
 
 export default function DashboardPage() {
   return (
     <Stack>
-      <Title order={2}>Dashboard</Title>
-      <Text c="dimmed">Aquí van métricas rápidas (ventas, órdenes, etc.).</Text>
+      <PageHeader
+        title="Dashboard"
+        description="Resumen operativo del día."
+      />
+      <SectionCard>
+        <EmptyState
+          title="Sin métricas aún"
+          description="En la siguiente fase se incorporan indicadores y reportes rápidos."
+        />
+      </SectionCard>
     </Stack>
   );
 }
