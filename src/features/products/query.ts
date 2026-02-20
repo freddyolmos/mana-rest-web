@@ -20,10 +20,14 @@ export const productsQueryKeys = {
   detail: (id: number) => [...productsQueryKeys.all, "detail", id] as const,
 };
 
-export function useProductsQuery(filters?: ProductFilters) {
+export function useProductsQuery(
+  filters?: ProductFilters,
+  options?: { enabled?: boolean },
+) {
   return useQuery({
     queryKey: productsQueryKeys.list(filters),
     queryFn: () => listProducts(filters),
+    enabled: options?.enabled,
   });
 }
 

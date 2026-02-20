@@ -37,6 +37,7 @@ type Me = {
 const iconByName = {
   dashboard: IconLayoutDashboard,
   pos: IconBuildingStore,
+  catalog: IconTags,
   products: IconBurger,
   orders: IconReceipt,
   kitchen: IconChefHat,

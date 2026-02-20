@@ -4,6 +4,7 @@ export type NavIconKey =
   | "pos"
   | "orders"
   | "kitchen"
+  | "catalog"
   | "products"
   | "categories"
   | "reports"
@@ -54,6 +55,12 @@ export const navSections: NavSection[] = [
   {
     title: "Catálogo",
     items: [
+      {
+        label: "Catálogo",
+        href: "/catalog",
+        icon: "catalog",
+        roles: ["ADMIN"],
+      },
       {
         label: "Productos",
         href: "/products",

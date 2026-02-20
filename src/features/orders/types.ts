@@ -43,3 +43,21 @@ export type CreateOrderInput = {
   type: OrderType;
   notes?: string;
 };
+
+export type OrderItemModifierInput = {
+  groupId: number;
+  optionIds: number[];
+};
+
+export type AddOrderItemInput = {
+  productId: number;
+  qty: number;
+  notes?: string;
+  modifiers?: OrderItemModifierInput[];
+};
+
+export type UpdateOrderItemInput = {
+  qty?: number;
+  notes?: string;
+  modifiers?: OrderItemModifierInput[];
+};

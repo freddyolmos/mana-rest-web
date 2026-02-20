@@ -1,5 +1,10 @@
 import { apiRequest } from "@/lib/api-client";
-import type { CreateOrderInput, Order } from "./types";
+import type {
+  AddOrderItemInput,
+  CreateOrderInput,
+  Order,
+  UpdateOrderItemInput,
+} from "./types";
 
 const ORDERS_PATH = "/orders";
 
@@ -23,5 +28,29 @@ export function sendOrderToKitchen(id: number) {
 export function markOrderReady(id: number) {
   return apiRequest<Order>(`${ORDERS_PATH}/${id}/mark-ready`, {
     method: "POST",
+  });
+}
+
+export function addOrderItem(orderId: number, input: AddOrderItemInput) {
+  return apiRequest<Order>(`${ORDERS_PATH}/${orderId}/items`, {
+    method: "POST",
+    body: input,
+  });
+}
+
+export function updateOrderItem(
+  orderId: number,
+  itemId: number,
+  input: UpdateOrderItemInput,
+) {
+  return apiRequest<Order>(`${ORDERS_PATH}/${orderId}/items/${itemId}`, {
+    method: "PATCH",
+    body: input,
+  });
+}
+
+export function removeOrderItem(orderId: number, itemId: number) {
+  return apiRequest<Order>(`${ORDERS_PATH}/${orderId}/items/${itemId}`, {
+    method: "DELETE",
   });
 }
