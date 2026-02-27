@@ -33,6 +33,7 @@ import { ApiError } from "@/lib/api-client";
 import {
   useCategoriesQuery,
   useCreateCategoryMutation,
+  useDeleteCategoryMutation,
   useUpdateCategoryMutation,
 } from "@/features/categories/query";
 import type { Category } from "@/features/categories/types";
@@ -80,6 +81,7 @@ export default function CatalogPage() {
   const groupsQuery = useModifierGroupsQuery();
   const createCategoryMutation = useCreateCategoryMutation();
   const updateCategoryMutation = useUpdateCategoryMutation();
+  const deleteCategoryMutation = useDeleteCategoryMutation();
   const createGroupMutation = useCreateModifierGroupMutation();
   const updateGroupMutation = useUpdateModifierGroupMutation();
   const toggleGroupMutation = useToggleModifierGroupActiveMutation();
@@ -139,7 +141,9 @@ export default function CatalogPage() {
   });
 
   const categorySaving =
-    createCategoryMutation.isPending || updateCategoryMutation.isPending;
+    createCategoryMutation.isPending ||
+    updateCategoryMutation.isPending ||
+    deleteCategoryMutation.isPending;
   const groupSaving =
     createGroupMutation.isPending ||
     updateGroupMutation.isPending ||
@@ -158,6 +162,7 @@ export default function CatalogPage() {
       selectedGroupQuery.error,
       createCategoryMutation.error,
       updateCategoryMutation.error,
+      deleteCategoryMutation.error,
       createGroupMutation.error,
       updateGroupMutation.error,
       deleteGroupMutation.error,
@@ -173,6 +178,7 @@ export default function CatalogPage() {
     selectedGroupQuery.error,
     createCategoryMutation.error,
     updateCategoryMutation.error,
+    deleteCategoryMutation.error,
     createGroupMutation.error,
     updateGroupMutation.error,
     deleteGroupMutation.error,
@@ -202,6 +208,21 @@ export default function CatalogPage() {
           setSelectedGroupIdForOptions(null);
         }
         void groupsQuery.refetch();
+      }
+    }
+  };
+
+  const onDeleteCategory = async (category: Category) => {
+    const confirmed = window.confirm(
+      `¿Eliminar la categoría "${category.name}"?\n\nEsta acción no se puede deshacer.`,
+    );
+    if (!confirmed) return;
+
+    try {
+      await deleteCategoryMutation.mutateAsync(category.id);
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 404) {
+        void categoriesQuery.refetch();
       }
     }
   };
@@ -313,6 +334,15 @@ export default function CatalogPage() {
                             }}
                           >
                             <IconEdit size={16} />
+                          </ActionIcon>
+                          <ActionIcon
+                            variant="subtle"
+                            color="red"
+                            onClick={() => {
+                              void onDeleteCategory(category);
+                            }}
+                          >
+                            <IconTrash size={16} />
                           </ActionIcon>
                         </Group>
                       </Table.Td>
