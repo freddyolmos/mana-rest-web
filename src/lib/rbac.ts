@@ -4,9 +4,10 @@ export type NavIconKey =
   | "pos"
   | "orders"
   | "kitchen"
+  | "billing"
+  | "tables"
   | "catalog"
   | "products"
-  | "categories"
   | "reports"
   | "settings";
 
@@ -50,6 +51,18 @@ export const navSections: NavSection[] = [
         icon: "kitchen",
         roles: ["ADMIN", "KITCHEN"],
       },
+      {
+        label: "Cobro",
+        href: "/billing",
+        icon: "billing",
+        roles: ["ADMIN", "CASHIER"],
+      },
+      {
+        label: "Mesas",
+        href: "/tables",
+        icon: "tables",
+        roles: ["ADMIN", "CASHIER"],
+      },
     ],
   },
   {
@@ -65,12 +78,6 @@ export const navSections: NavSection[] = [
         label: "Productos",
         href: "/products",
         icon: "products",
-        roles: ["ADMIN"],
-      },
-      {
-        label: "Categorías",
-        href: "/categories",
-        icon: "categories",
         roles: ["ADMIN"],
       },
     ],

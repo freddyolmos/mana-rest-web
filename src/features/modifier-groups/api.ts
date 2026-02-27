@@ -39,6 +39,12 @@ export function toggleModifierGroupActive(id: number) {
   });
 }
 
+export function deleteModifierGroup(id: number) {
+  return apiRequest<void>(`${MODIFIER_GROUPS_PATH}/${id}`, {
+    method: "DELETE",
+  });
+}
+
 export function createModifierOption(input: CreateModifierOptionInput) {
   return apiRequest<ModifierOption>(MODIFIER_OPTIONS_PATH, {
     method: "POST",
@@ -56,5 +62,11 @@ export function updateModifierOption(id: number, input: UpdateModifierOptionInpu
 export function toggleModifierOptionActive(id: number) {
   return apiRequest<ModifierOption>(`${MODIFIER_OPTIONS_PATH}/${id}/toggle-active`, {
     method: "PATCH",
+  });
+}
+
+export function deleteModifierOption(id: number) {
+  return apiRequest<void>(`${MODIFIER_OPTIONS_PATH}/${id}`, {
+    method: "DELETE",
   });
 }

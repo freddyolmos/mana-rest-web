@@ -3,19 +3,35 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   addOrderItem,
+  attachTableToOrder,
   createOrder,
   getOrderById,
+  listOrders,
   markOrderReady,
+  releaseTableFromOrder,
   removeOrderItem,
   sendOrderToKitchen,
   updateOrderItem,
 } from "./api";
-import type { AddOrderItemInput, CreateOrderInput, UpdateOrderItemInput } from "./types";
+import type {
+  AddOrderItemInput,
+  CreateOrderInput,
+  QueryOrdersInput,
+  UpdateOrderItemInput,
+} from "./types";
 
 export const ordersQueryKeys = {
   all: ["orders"] as const,
+  list: (filters?: QueryOrdersInput) => [...ordersQueryKeys.all, "list", { filters }] as const,
   detail: (id: number) => [...ordersQueryKeys.all, "detail", id] as const,
 };
+
+export function useOrdersQuery(filters?: QueryOrdersInput) {
+  return useQuery({
+    queryKey: ordersQueryKeys.list(filters),
+    queryFn: () => listOrders(filters),
+  });
+}
 
 export function useOrderQuery(id: number | null) {
   return useQuery({
@@ -103,6 +119,31 @@ export function useRemoveOrderItemMutation() {
       void queryClient.invalidateQueries({
         queryKey: ordersQueryKeys.detail(variables.orderId),
       });
+    },
+  });
+}
+
+export function useAttachTableToOrderMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ orderId, tableId }: { orderId: number; tableId: number }) =>
+      attachTableToOrder(orderId, tableId),
+    onSuccess: (_data, variables) => {
+      void queryClient.invalidateQueries({
+        queryKey: ordersQueryKeys.detail(variables.orderId),
+      });
+      void queryClient.invalidateQueries({ queryKey: ["tables"] });
+    },
+  });
+}
+
+export function useReleaseTableFromOrderMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (orderId: number) => releaseTableFromOrder(orderId),
+    onSuccess: (_data, orderId) => {
+      void queryClient.invalidateQueries({ queryKey: ordersQueryKeys.detail(orderId) });
+      void queryClient.invalidateQueries({ queryKey: ["tables"] });
     },
   });
 }

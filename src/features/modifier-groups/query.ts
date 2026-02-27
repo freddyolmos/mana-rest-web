@@ -4,6 +4,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   createModifierGroup,
   createModifierOption,
+  deleteModifierGroup,
+  deleteModifierOption,
   getModifierGroupById,
   listModifierGroups,
   toggleModifierGroupActive,
@@ -104,6 +106,29 @@ export function useToggleModifierOptionActiveMutation() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (id: number) => toggleModifierOptionActive(id),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: modifierGroupsQueryKeys.all });
+    },
+  });
+}
+
+export function useDeleteModifierGroupMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: number) => deleteModifierGroup(id),
+    onSuccess: (_data, id) => {
+      void queryClient.invalidateQueries({ queryKey: modifierGroupsQueryKeys.all });
+      void queryClient.removeQueries({
+        queryKey: modifierGroupsQueryKeys.detail(id),
+      });
+    },
+  });
+}
+
+export function useDeleteModifierOptionMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: number) => deleteModifierOption(id),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: modifierGroupsQueryKeys.all });
     },

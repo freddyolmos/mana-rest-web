@@ -1,7 +1,12 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { createCategory, listCategories, updateCategory } from "./api";
+import {
+  createCategory,
+  deleteCategory,
+  listCategories,
+  updateCategory,
+} from "./api";
 import type { CreateCategoryInput, UpdateCategoryInput } from "./types";
 
 export const categoriesQueryKeys = {
@@ -36,6 +41,16 @@ export function useUpdateCategoryMutation() {
       id: number;
       payload: UpdateCategoryInput;
     }) => updateCategory(id, payload),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: categoriesQueryKeys.all });
+    },
+  });
+}
+
+export function useDeleteCategoryMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: number) => deleteCategory(id),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: categoriesQueryKeys.all });
     },

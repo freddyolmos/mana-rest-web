@@ -41,3 +41,9 @@ export function toggleProductActive(id: number) {
     method: "PATCH",
   });
 }
+
+export function deleteProduct(id: number) {
+  return apiRequest<void>(`${PRODUCTS_PATH}/${id}`, {
+    method: "DELETE",
+  });
+}

@@ -34,9 +34,17 @@ export type Order = {
   total?: number;
   subtotal?: number;
   tableId?: number | null;
+  createdById?: number | null;
   createdAt?: string;
   updatedAt?: string;
   items?: OrderItem[];
+};
+
+export type QueryOrdersInput = {
+  status?: OrderStatus;
+  type?: OrderType;
+  tableId?: number;
+  createdById?: number;
 };
 
 export type CreateOrderInput = {

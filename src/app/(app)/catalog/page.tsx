@@ -17,12 +17,19 @@ import {
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { useForm } from "@mantine/form";
-import { IconEdit, IconPlus, IconReload, IconToggleLeft } from "@tabler/icons-react";
+import {
+  IconEdit,
+  IconPlus,
+  IconReload,
+  IconToggleLeft,
+  IconTrash,
+} from "@tabler/icons-react";
 import { useMemo, useState } from "react";
 import { EmptyState } from "@/components/EmptyState";
 import { PageHeader } from "@/components/PageHeader";
 import { SectionCard } from "@/components/SectionCard";
 import { StatusBadge } from "@/components/StatusBadge";
+import { ApiError } from "@/lib/api-client";
 import {
   useCategoriesQuery,
   useCreateCategoryMutation,
@@ -32,6 +39,8 @@ import type { Category } from "@/features/categories/types";
 import {
   useCreateModifierGroupMutation,
   useCreateModifierOptionMutation,
+  useDeleteModifierGroupMutation,
+  useDeleteModifierOptionMutation,
   useModifierGroupQuery,
   useModifierGroupsQuery,
   useToggleModifierGroupActiveMutation,
@@ -74,9 +83,11 @@ export default function CatalogPage() {
   const createGroupMutation = useCreateModifierGroupMutation();
   const updateGroupMutation = useUpdateModifierGroupMutation();
   const toggleGroupMutation = useToggleModifierGroupActiveMutation();
+  const deleteGroupMutation = useDeleteModifierGroupMutation();
   const createOptionMutation = useCreateModifierOptionMutation();
   const updateOptionMutation = useUpdateModifierOptionMutation();
   const toggleOptionMutation = useToggleModifierOptionActiveMutation();
+  const deleteOptionMutation = useDeleteModifierOptionMutation();
 
   const [categorySelected, setCategorySelected] = useState<Category | null>(null);
   const [groupSelected, setGroupSelected] = useState<ModifierGroup | null>(null);
@@ -132,11 +143,13 @@ export default function CatalogPage() {
   const groupSaving =
     createGroupMutation.isPending ||
     updateGroupMutation.isPending ||
-    toggleGroupMutation.isPending;
+    toggleGroupMutation.isPending ||
+    deleteGroupMutation.isPending;
   const optionSaving =
     createOptionMutation.isPending ||
     updateOptionMutation.isPending ||
-    toggleOptionMutation.isPending;
+    toggleOptionMutation.isPending ||
+    deleteOptionMutation.isPending;
 
   const catalogError = useMemo(() => {
     const errors = [
@@ -147,8 +160,10 @@ export default function CatalogPage() {
       updateCategoryMutation.error,
       createGroupMutation.error,
       updateGroupMutation.error,
+      deleteGroupMutation.error,
       createOptionMutation.error,
       updateOptionMutation.error,
+      deleteOptionMutation.error,
     ].filter(Boolean);
     if (!errors.length) return null;
     return getErrorMessage(errors[0]);
@@ -160,13 +175,51 @@ export default function CatalogPage() {
     updateCategoryMutation.error,
     createGroupMutation.error,
     updateGroupMutation.error,
+    deleteGroupMutation.error,
     createOptionMutation.error,
     updateOptionMutation.error,
+    deleteOptionMutation.error,
   ]);
 
   const categories = categoriesQuery.data ?? [];
   const groups = groupsQuery.data ?? [];
   const options = selectedGroupQuery.data?.options ?? [];
+
+  const onDeleteGroup = async (group: ModifierGroup) => {
+    const confirmed = window.confirm(
+      `¿Eliminar el grupo "${group.name}"?\n\nEsta acción no se puede deshacer.`,
+    );
+    if (!confirmed) return;
+
+    try {
+      await deleteGroupMutation.mutateAsync(group.id);
+      if (selectedGroupIdForOptions === group.id) {
+        setSelectedGroupIdForOptions(null);
+      }
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 404) {
+        if (selectedGroupIdForOptions === group.id) {
+          setSelectedGroupIdForOptions(null);
+        }
+        void groupsQuery.refetch();
+      }
+    }
+  };
+
+  const onDeleteOption = async (option: ModifierOption) => {
+    const confirmed = window.confirm(
+      `¿Eliminar la opción "${option.name}"?\n\nEsta acción no se puede deshacer.`,
+    );
+    if (!confirmed) return;
+
+    try {
+      await deleteOptionMutation.mutateAsync(option.id);
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 404) {
+        void selectedGroupQuery.refetch();
+      }
+    }
+  };
 
   return (
     <Stack>
@@ -351,6 +404,15 @@ export default function CatalogPage() {
                           >
                             <IconToggleLeft size={16} />
                           </ActionIcon>
+                          <ActionIcon
+                            variant="subtle"
+                            color="red"
+                            onClick={() => {
+                              void onDeleteGroup(group);
+                            }}
+                          >
+                            <IconTrash size={16} />
+                          </ActionIcon>
                         </Group>
                       </Table.Td>
                     </Table.Tr>
@@ -446,6 +508,15 @@ export default function CatalogPage() {
                             }}
                           >
                             <IconToggleLeft size={16} />
+                          </ActionIcon>
+                          <ActionIcon
+                            variant="subtle"
+                            color="red"
+                            onClick={() => {
+                              void onDeleteOption(option);
+                            }}
+                          >
+                            <IconTrash size={16} />
                           </ActionIcon>
                         </Group>
                       </Table.Td>

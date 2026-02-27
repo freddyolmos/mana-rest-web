@@ -17,8 +17,10 @@ import {
   IconBurger,
   IconReceipt,
   IconChefHat,
+  IconTable,
   IconTags,
   IconChartBar,
+  IconCreditCard,
   IconSettings,
 } from "@tabler/icons-react";
 import Link from "next/link";
@@ -41,7 +43,8 @@ const iconByName = {
   products: IconBurger,
   orders: IconReceipt,
   kitchen: IconChefHat,
-  categories: IconTags,
+  billing: IconCreditCard,
+  tables: IconTable,
   reports: IconChartBar,
   settings: IconSettings,
 } as const;

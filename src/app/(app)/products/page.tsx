@@ -16,7 +16,14 @@ import {
 } from "@mantine/core";
 import { useDebouncedValue, useDisclosure } from "@mantine/hooks";
 import { useForm } from "@mantine/form";
-import { IconEdit, IconEye, IconPlus, IconReload, IconToggleLeft } from "@tabler/icons-react";
+import {
+  IconEdit,
+  IconEye,
+  IconPlus,
+  IconReload,
+  IconToggleLeft,
+  IconTrash,
+} from "@tabler/icons-react";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { EmptyState } from "@/components/EmptyState";
@@ -25,8 +32,10 @@ import { SectionCard } from "@/components/SectionCard";
 import { StatusBadge } from "@/components/StatusBadge";
 import { useCategoriesQuery } from "@/features/categories/query";
 import type { Category } from "@/features/categories/types";
+import { ApiError } from "@/lib/api-client";
 import {
   useCreateProductMutation,
+  useDeleteProductMutation,
   useProductsQuery,
   useToggleProductActiveMutation,
   useUpdateProductMutation,
@@ -62,6 +71,7 @@ export default function ProductsPage() {
   const createProductMutation = useCreateProductMutation();
   const updateProductMutation = useUpdateProductMutation();
   const toggleProductMutation = useToggleProductActiveMutation();
+  const deleteProductMutation = useDeleteProductMutation();
 
   const [productModalOpened, productModal] = useDisclosure(false);
 
@@ -99,6 +109,7 @@ export default function ProductsPage() {
       createProductMutation.error,
       updateProductMutation.error,
       toggleProductMutation.error,
+      deleteProductMutation.error,
     ].filter(Boolean);
     return errors.length > 0 ? getErrorMessage(errors[0]) : null;
   }, [
@@ -107,12 +118,29 @@ export default function ProductsPage() {
     createProductMutation.error,
     updateProductMutation.error,
     toggleProductMutation.error,
+    deleteProductMutation.error,
   ]);
 
   const productSaving =
     createProductMutation.isPending ||
     updateProductMutation.isPending ||
-    toggleProductMutation.isPending;
+    toggleProductMutation.isPending ||
+    deleteProductMutation.isPending;
+
+  const onDeleteProduct = async (product: Product) => {
+    const confirmed = window.confirm(
+      `¿Eliminar el producto "${product.name}"?\n\nEsta acción no se puede deshacer.`,
+    );
+    if (!confirmed) return;
+
+    try {
+      await deleteProductMutation.mutateAsync(product.id);
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 404) {
+        void productsQuery.refetch();
+      }
+    }
+  };
 
   return (
     <Stack>
@@ -239,6 +267,7 @@ export default function ProductsPage() {
                           });
                           productModal.open();
                         }}
+                        disabled={productSaving}
                       >
                         <IconEdit size={16} />
                       </ActionIcon>
@@ -249,8 +278,20 @@ export default function ProductsPage() {
                         onClick={() => {
                           void toggleProductMutation.mutateAsync(product.id);
                         }}
+                        disabled={productSaving}
                       >
                         <IconToggleLeft size={16} />
+                      </ActionIcon>
+                      <ActionIcon
+                        variant="subtle"
+                        color="red"
+                        aria-label="Eliminar producto"
+                        onClick={() => {
+                          void onDeleteProduct(product);
+                        }}
+                        disabled={productSaving}
+                      >
+                        <IconTrash size={16} />
                       </ActionIcon>
                     </Group>
                   </Table.Td>

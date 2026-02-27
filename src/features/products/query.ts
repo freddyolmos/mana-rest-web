@@ -3,6 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   createProduct,
+  deleteProduct,
   getProductById,
   listProducts,
   toggleProductActive,
@@ -70,6 +71,16 @@ export function useToggleProductActiveMutation() {
     onSuccess: (_data, id) => {
       void queryClient.invalidateQueries({ queryKey: productsQueryKeys.all });
       void queryClient.invalidateQueries({ queryKey: productsQueryKeys.detail(id) });
+    },
+  });
+}
+
+export function useDeleteProductMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: number) => deleteProduct(id),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: productsQueryKeys.all });
     },
   });
 }

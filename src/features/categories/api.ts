@@ -28,3 +28,9 @@ export function updateCategory(id: number, input: UpdateCategoryInput) {
     body: input,
   });
 }
+
+export function deleteCategory(id: number) {
+  return apiRequest<void>(`${CATEGORIES_PATH}/${id}`, {
+    method: "DELETE",
+  });
+}

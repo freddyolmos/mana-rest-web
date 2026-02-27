@@ -3,10 +3,22 @@ import type {
   AddOrderItemInput,
   CreateOrderInput,
   Order,
+  QueryOrdersInput,
   UpdateOrderItemInput,
 } from "./types";
 
 const ORDERS_PATH = "/orders";
+
+export function listOrders(filters?: QueryOrdersInput) {
+  return apiRequest<Order[]>(ORDERS_PATH, {
+    query: {
+      status: filters?.status,
+      type: filters?.type,
+      tableId: filters?.tableId,
+      createdById: filters?.createdById,
+    },
+  });
+}
 
 export function getOrderById(id: number) {
   return apiRequest<Order>(`${ORDERS_PATH}/${id}`);
@@ -28,6 +40,18 @@ export function sendOrderToKitchen(id: number) {
 export function markOrderReady(id: number) {
   return apiRequest<Order>(`${ORDERS_PATH}/${id}/mark-ready`, {
     method: "POST",
+  });
+}
+
+export function attachTableToOrder(orderId: number, tableId: number) {
+  return apiRequest<Order>(`${ORDERS_PATH}/${orderId}/attach-table/${tableId}`, {
+    method: "PATCH",
+  });
+}
+
+export function releaseTableFromOrder(orderId: number) {
+  return apiRequest<Order>(`${ORDERS_PATH}/${orderId}/release-table`, {
+    method: "PATCH",
   });
 }
 

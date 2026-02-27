@@ -6,10 +6,12 @@ export type {
 } from "@/features/categories/types";
 export {
   createCategory,
+  deleteCategory as deleteCategoryApi,
   listCategories,
   updateCategory,
 } from "@/features/categories/api";
 
-export async function deleteCategory(): Promise<{ ok: boolean }> {
-  throw new Error("Eliminar categorías no está implementado en la API");
+export async function deleteCategory(id: number): Promise<{ ok: boolean }> {
+  await deleteCategoryApi(id);
+  return { ok: true };
 }

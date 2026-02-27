@@ -6,77 +6,127 @@ import {
   Group,
   LoadingOverlay,
   NumberInput,
+  Select,
   Stack,
   Table,
   Text,
 } from "@mantine/core";
-import { useQueries } from "@tanstack/react-query";
-import { IconArrowRight, IconRefresh, IconTrash } from "@tabler/icons-react";
-import { useMemo, useState } from "react";
+import { IconArrowRight, IconRefresh } from "@tabler/icons-react";
+import { useEffect, useMemo, useState } from "react";
 import { EmptyState } from "@/components/EmptyState";
 import { PageHeader } from "@/components/PageHeader";
 import { SectionCard } from "@/components/SectionCard";
 import { StatusBadge } from "@/components/StatusBadge";
 import {
-  ordersQueryKeys,
+  useAttachTableToOrderMutation,
   useMarkOrderReadyMutation,
   useOrderQuery,
+  useOrdersQuery,
+  useReleaseTableFromOrderMutation,
   useSendOrderToKitchenMutation,
 } from "@/features/orders/query";
-import { getOrderById } from "@/features/orders/api";
-import { useRecentOrderIds } from "@/features/orders/recent-orders";
+import { useTablesQuery } from "@/features/tables/query";
+import type { Role } from "@/lib/rbac";
+import type { OrderStatus, OrderType } from "@/features/orders/types";
+
+const ORDER_STATUS_OPTIONS: { value: OrderStatus; label: string }[] = [
+  { value: "OPEN", label: "Abierta" },
+  { value: "SENT_TO_KITCHEN", label: "En cocina" },
+  { value: "READY", label: "Lista" },
+  { value: "CLOSED", label: "Cerrada" },
+  { value: "CANCELED", label: "Cancelada" },
+];
+
+const ORDER_TYPE_OPTIONS: { value: OrderType; label: string }[] = [
+  { value: "DINE_IN", label: "En mesa" },
+  { value: "TAKEOUT", label: "Para llevar" },
+  { value: "DELIVERY", label: "Delivery" },
+];
+
+type Me = {
+  userId: number;
+  email: string;
+  role: Role;
+};
 
 function getErrorMessage(err: unknown) {
   return err instanceof Error ? err.message : "Ocurrió un error";
 }
 
 export default function OrdersPage() {
-  const recentOrders = useRecentOrderIds();
+  const [statusFilter, setStatusFilter] = useState<OrderStatus | null>(null);
+  const [typeFilter, setTypeFilter] = useState<OrderType | null>(null);
+  const [tableFilterId, setTableFilterId] = useState<number | "">("");
+  const [createdByFilterId, setCreatedByFilterId] = useState<number | "">("");
   const [orderIdInput, setOrderIdInput] = useState<number | "">("");
   const [selectedOrderId, setSelectedOrderId] = useState<number | null>(null);
+  const [tableToAttachId, setTableToAttachId] = useState<string | null>(null);
+  const [me, setMe] = useState<Me | null>(null);
 
+  const ordersQuery = useOrdersQuery({
+    status: statusFilter ?? undefined,
+    type: typeFilter ?? undefined,
+    tableId: typeof tableFilterId === "number" ? tableFilterId : undefined,
+    createdById:
+      typeof createdByFilterId === "number" ? createdByFilterId : undefined,
+  });
   const orderQuery = useOrderQuery(selectedOrderId);
   const sendToKitchenMutation = useSendOrderToKitchenMutation();
   const markReadyMutation = useMarkOrderReadyMutation();
-
-  const recentOrderQueries = useQueries({
-    queries: recentOrders.ids.slice(0, 10).map((id) => ({
-      queryKey: ordersQueryKeys.detail(id),
-      queryFn: () => getOrderById(id),
-      staleTime: 10_000,
-    })),
-  });
-
-  const recentOrdersData = useMemo(
-    () =>
-      recentOrderQueries
-        .map((query) => query.data)
-        .filter((order): order is NonNullable<typeof order> => Boolean(order)),
-    [recentOrderQueries],
-  );
+  const attachTableMutation = useAttachTableToOrderMutation();
+  const releaseTableMutation = useReleaseTableFromOrderMutation();
+  const freeTablesQuery = useTablesQuery({ status: "FREE" });
+  const filteredOrders = ordersQuery.data ?? [];
 
   const detailOrder = orderQuery.data;
   const isTransitioning =
-    sendToKitchenMutation.isPending || markReadyMutation.isPending;
+    sendToKitchenMutation.isPending ||
+    markReadyMutation.isPending ||
+    attachTableMutation.isPending ||
+    releaseTableMutation.isPending;
 
   const pageError = useMemo(() => {
+    const ordersListError = ordersQuery.error;
     const detailError = orderQuery.error;
-    const listError = recentOrderQueries.find((query) => query.error)?.error;
     const mutationError =
       sendToKitchenMutation.error ?? markReadyMutation.error ?? null;
-    const source = detailError ?? listError ?? mutationError;
+    const tableMutationError =
+      attachTableMutation.error ?? releaseTableMutation.error ?? null;
+    const source =
+      ordersListError ?? detailError ?? mutationError ?? tableMutationError;
     return source ? getErrorMessage(source) : null;
   }, [
+    ordersQuery.error,
     orderQuery.error,
-    recentOrderQueries,
     sendToKitchenMutation.error,
     markReadyMutation.error,
+    attachTableMutation.error,
+    releaseTableMutation.error,
   ]);
 
   const transitionAllowed = {
     canSendToKitchen: detailOrder?.status === "OPEN",
     canMarkReady: detailOrder?.status === "SENT_TO_KITCHEN",
   };
+
+  const freeTableOptions = useMemo(
+    () =>
+      (freeTablesQuery.data ?? []).map((table) => ({
+        value: String(table.id),
+        label: `${table.name} (#${table.id})`,
+      })),
+    [freeTablesQuery.data],
+  );
+  const canManageTables = me?.role === "ADMIN" || me?.role === "CASHIER";
+
+  useEffect(() => {
+    (async () => {
+      const res = await fetch("/api/auth/me", { cache: "no-store" });
+      if (res.ok) {
+        setMe((await res.json()) as Me);
+      }
+    })();
+  }, []);
 
   return (
     <Stack>
@@ -88,10 +138,9 @@ export default function OrdersPage() {
             variant="light"
             leftSection={<IconRefresh size={16} />}
             onClick={() => {
+              void ordersQuery.refetch();
               void orderQuery.refetch();
-              recentOrderQueries.forEach((query) => {
-                void query.refetch();
-              });
+              void freeTablesQuery.refetch();
             }}
           >
             Recargar
@@ -106,23 +155,72 @@ export default function OrdersPage() {
       )}
 
       <SectionCard pos="relative">
-        <LoadingOverlay visible={recentOrderQueries.some((query) => query.isFetching)} />
+        <LoadingOverlay visible={ordersQuery.isFetching} />
         <Stack>
-          <Group justify="space-between">
-            <Text fw={600}>Órdenes recientes</Text>
+          <Text fw={600}>Listado de órdenes</Text>
+          <Group align="flex-end">
+            <Select
+              label="Estado"
+              placeholder="Todos"
+              data={ORDER_STATUS_OPTIONS}
+              value={statusFilter}
+              onChange={(value) =>
+                setStatusFilter(value ? (value as OrderStatus) : null)
+              }
+              clearable
+              w={220}
+            />
+            <Select
+              label="Tipo"
+              placeholder="Todos"
+              data={ORDER_TYPE_OPTIONS}
+              value={typeFilter}
+              onChange={(value) =>
+                setTypeFilter(value ? (value as OrderType) : null)
+              }
+              clearable
+              w={220}
+            />
+            <NumberInput
+              label="Mesa ID"
+              placeholder="Ej: 3"
+              value={tableFilterId}
+              onChange={(value) =>
+                setTableFilterId(typeof value === "number" ? value : "")
+              }
+              allowDecimal={false}
+              min={1}
+              clampBehavior="strict"
+              w={160}
+            />
+            <NumberInput
+              label="Creada por ID"
+              placeholder="Ej: 12"
+              value={createdByFilterId}
+              onChange={(value) =>
+                setCreatedByFilterId(typeof value === "number" ? value : "")
+              }
+              allowDecimal={false}
+              min={1}
+              clampBehavior="strict"
+              w={180}
+            />
             <Button
               variant="subtle"
-              color="red"
-              onClick={() => recentOrders.clear()}
-              leftSection={<IconTrash size={16} />}
+              onClick={() => {
+                setStatusFilter(null);
+                setTypeFilter(null);
+                setTableFilterId("");
+                setCreatedByFilterId("");
+              }}
             >
-              Limpiar historial
+              Limpiar filtros
             </Button>
           </Group>
-          {recentOrdersData.length === 0 ? (
+          {filteredOrders.length === 0 && !ordersQuery.isLoading ? (
             <EmptyState
-              title="Sin órdenes recientes"
-              description="Crea órdenes en POS para verlas aquí."
+              title="Sin órdenes"
+              description="No hay resultados para los filtros seleccionados."
             />
           ) : (
             <Table highlightOnHover>
@@ -131,18 +229,22 @@ export default function OrdersPage() {
                   <Table.Th>ID</Table.Th>
                   <Table.Th>Tipo</Table.Th>
                   <Table.Th>Estado</Table.Th>
+                  <Table.Th>Mesa</Table.Th>
+                  <Table.Th>Creada por</Table.Th>
                   <Table.Th>Ítems</Table.Th>
                   <Table.Th ta="right">Acciones</Table.Th>
                 </Table.Tr>
               </Table.Thead>
               <Table.Tbody>
-                {recentOrdersData.map((order) => (
+                {filteredOrders.map((order) => (
                   <Table.Tr key={order.id}>
                     <Table.Td>#{order.id}</Table.Td>
                     <Table.Td>{order.type}</Table.Td>
                     <Table.Td>
                       <StatusBadge status={order.status} />
                     </Table.Td>
+                    <Table.Td>{order.tableId ? `#${order.tableId}` : "-"}</Table.Td>
+                    <Table.Td>{order.createdById ?? "-"}</Table.Td>
                     <Table.Td>{order.items?.length ?? 0}</Table.Td>
                     <Table.Td>
                       <Group justify="flex-end">
@@ -221,6 +323,12 @@ export default function OrdersPage() {
                   </Text>{" "}
                   {detailOrder.type}
                 </Text>
+                <Text>
+                  <Text span fw={600}>
+                    Mesa:
+                  </Text>{" "}
+                  {detailOrder.tableId ? `#${detailOrder.tableId}` : "Sin mesa"}
+                </Text>
                 <StatusBadge status={detailOrder.status} />
               </Group>
               <Group>
@@ -247,6 +355,47 @@ export default function OrdersPage() {
                 </Button>
               </Group>
             </Group>
+
+            {canManageTables ? (
+              <Group align="flex-end">
+                <Select
+                  label="Asignar mesa"
+                  placeholder="Mesa libre"
+                  data={freeTableOptions}
+                  value={tableToAttachId}
+                  onChange={setTableToAttachId}
+                  w={220}
+                />
+                <Button
+                  size="xs"
+                  onClick={() => {
+                    if (!selectedOrderId || !tableToAttachId) return;
+                    void attachTableMutation.mutateAsync({
+                      orderId: selectedOrderId,
+                      tableId: Number(tableToAttachId),
+                    });
+                    setTableToAttachId(null);
+                    void freeTablesQuery.refetch();
+                  }}
+                  disabled={!selectedOrderId || !tableToAttachId}
+                >
+                  Adjuntar mesa
+                </Button>
+                <Button
+                  size="xs"
+                  variant="light"
+                  color="red"
+                  onClick={() => {
+                    if (!selectedOrderId) return;
+                    void releaseTableMutation.mutateAsync(selectedOrderId);
+                    void freeTablesQuery.refetch();
+                  }}
+                  disabled={!selectedOrderId}
+                >
+                  Liberar mesa
+                </Button>
+              </Group>
+            ) : null}
 
             <Table striped>
               <Table.Thead>
